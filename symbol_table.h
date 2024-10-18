@@ -20,8 +20,7 @@ public:
         this->bucket_count = bucket_count;
         this->current_scope = NULL;  
         this->current_scope_id = 1;   
-        this->outlog = log;
-        enter_scope();                
+        this->outlog = log;              
     }
 
     ~symbol_table()
@@ -37,8 +36,6 @@ public:
         scope_table *new_scope = new scope_table(bucket_count, current_scope_id++, current_scope);
         current_scope = new_scope;
         *outlog << "New ScopeTable with ID " << current_scope->get_unique_id() << " created" << std::endl;
-        outlog->flush();
-        cout<<"Inside";
     }
 
     void exit_scope()

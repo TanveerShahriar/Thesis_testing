@@ -29,6 +29,8 @@ void yyerror(char *s) {
 start : program
 	{
 		outlog<<"At line no: "<<lines<<" start : program "<<endl<<endl;
+		outlog << "Symbol Table" << endl << endl;
+		st.print_all_scopes();
 	}
 	;
 
@@ -503,6 +505,7 @@ int main(int argc, char *argv[])
 
 	yyin = fopen(argv[1], "r");
 	outlog.open("my_log.txt", ios::trunc);
+	st.enter_scope();
 	
 	if(yyin == NULL)
 	{
