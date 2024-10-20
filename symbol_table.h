@@ -42,10 +42,10 @@ public:
     {
         if (current_scope == NULL)
         {
-            *outlog << "No scope to exit." << endl;
+            *outlog << "No scope to exit." << endl << endl;
             return;
         }
-        *outlog << "Exiting scope with ID: " << current_scope->get_unique_id() << endl;
+        *outlog << "Scopetable with ID " << current_scope->get_unique_id() << " removed" << endl << endl;
         scope_table *temp = current_scope;
         current_scope = current_scope->get_parent_scope();  
         delete temp;  
@@ -90,14 +90,14 @@ public:
 
     void print_all_scopes()
     {
-        *outlog << "################################" << endl;
+        *outlog << "################################" << endl << endl;
         scope_table *temp = current_scope;
         while (temp != NULL)
         {
             temp->print_scope_table(*outlog);
             temp = temp->get_parent_scope();
         }
-        *outlog << "################################" << endl;
+        *outlog << "################################" << endl << endl;
     }
 };
 

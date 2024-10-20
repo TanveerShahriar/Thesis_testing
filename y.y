@@ -124,6 +124,9 @@ compound_statement : LCURL
 		outlog<<"{\n"+$3->get_name()+"\n}"<<endl<<endl;
 		
 		$$ = new symbol_info("{\n"+$3->get_name()+"\n}","compound_statement");
+
+		st.print_all_scopes();
+		st.exit_scope();
 	}
 	| LCURL RCURL
 	{

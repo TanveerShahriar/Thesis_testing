@@ -86,7 +86,7 @@ public:
 
     void print_scope_table(ofstream& outlog)
     {
-        outlog << "ScopeTable # " + to_string(unique_id) << endl;
+        outlog << "ScopeTable # " + to_string(unique_id) << endl << endl;
 
         for (int i = 0; i < bucket_count; ++i)
         {
@@ -95,7 +95,7 @@ public:
             {
                 outlog << "< " << sym->get_name() << " : " << sym->get_type() << " > ";
             }
-            outlog << endl;
+            outlog << endl << endl;
         }
     }
 
