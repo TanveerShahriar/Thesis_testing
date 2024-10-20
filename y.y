@@ -53,7 +53,7 @@ program : program unit
 unit : var_declaration
 	{
 		outlog<<"At line no: "<<lines<<" unit : var_declaration "<<endl<<endl;
-		outlog<<$1->get_name()<<endl;
+		outlog<<$1->get_name()<<endl<<endl;
 
 		$$ = new symbol_info($1->get_name(), "unit");
 		
@@ -61,7 +61,7 @@ unit : var_declaration
 	| func_definition
 	{
 		outlog<<"At line no: "<<lines<<" unit : func_definition "<<endl<<endl;
-		outlog<<$1->get_name()<<endl;
+		outlog<<$1->get_name()<<endl<<endl;
 
 		$$ = new symbol_info($1->get_name(), "unit");
 	}
@@ -114,12 +114,16 @@ parameter_list	: parameter_list COMMA type_specifier ID
 	}
 	;
 
-compound_statement : LCURL statements RCURL
+compound_statement : LCURL 
+	{
+		st.enter_scope();
+	}
+	statements RCURL
 	{
 		outlog<<"At line no: "<<lines<<" compound_statement : LCURL statements RCURL "<<endl<<endl;
-		outlog<<"{\n"+$2->get_name()+"\n}"<<endl<<endl;
+		outlog<<"{\n"+$3->get_name()+"\n}"<<endl<<endl;
 		
-		$$ = new symbol_info("{\n"+$2->get_name()+"\n}","compound_statement");
+		$$ = new symbol_info("{\n"+$3->get_name()+"\n}","compound_statement");
 	}
 	| LCURL RCURL
 	{

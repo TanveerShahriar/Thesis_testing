@@ -5,6 +5,7 @@
 #include "symbol_info.h"
 
 #include<bits/stdc++.h>
+using namespace std;
 
 class scope_table
 {

@@ -2,8 +2,8 @@
 #define SYMBOL_TABLE_H
 
 #include "scope_table.h"
-#include<bits/stdc++.h>
 
+#include<bits/stdc++.h>
 using namespace std;
 
 class symbol_table
@@ -35,17 +35,17 @@ public:
     {
         scope_table *new_scope = new scope_table(bucket_count, current_scope_id++, current_scope);
         current_scope = new_scope;
-        *outlog << "New ScopeTable with ID " << current_scope->get_unique_id() << " created" << std::endl;
+        *outlog << "New ScopeTable with ID " << current_scope->get_unique_id() << " created" << endl << endl;
     }
 
     void exit_scope()
     {
         if (current_scope == NULL)
         {
-            *outlog << "No scope to exit." << std::endl;
+            *outlog << "No scope to exit." << endl;
             return;
         }
-        *outlog << "Exiting scope with ID: " << current_scope->get_unique_id() << std::endl;
+        *outlog << "Exiting scope with ID: " << current_scope->get_unique_id() << endl;
         scope_table *temp = current_scope;
         current_scope = current_scope->get_parent_scope();  
         delete temp;  
@@ -84,20 +84,20 @@ public:
         }
         else
         {
-            *outlog << "No active scope." << std::endl;
+            *outlog << "No active scope." << endl;
         }
     }
 
     void print_all_scopes()
     {
-        *outlog << "################################" << std::endl;
+        *outlog << "################################" << endl;
         scope_table *temp = current_scope;
         while (temp != NULL)
         {
             temp->print_scope_table(*outlog);
             temp = temp->get_parent_scope();
         }
-        *outlog << "################################" << std::endl;
+        *outlog << "################################" << endl;
     }
 };
 
