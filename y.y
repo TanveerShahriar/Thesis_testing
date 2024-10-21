@@ -163,6 +163,7 @@ compound_statement : LCURL
 				st.insert(param);
 			}
 			param_count = 0;
+			params.clear();
 		}
 
 		st.print_all_scopes();
