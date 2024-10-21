@@ -174,7 +174,9 @@ var_declaration : type_specifier declaration_list SEMICOLON
 				func->set_name(token_var.substr(0, index_lthird));
 				func->set_symbol_type("Array");
 				func->set_return_type($1->get_name());
-				func->set_size(token_var.substr(index_lthird + 1, index_rthird - index_lthird - 1));
+
+				string s = token_var.substr(index_lthird + 1, index_rthird - index_lthird - 1);
+				func->set_size(stoi(s));
 			} else {
 				func->set_symbol_type("Variable");
 				func->set_return_type($1->get_name());

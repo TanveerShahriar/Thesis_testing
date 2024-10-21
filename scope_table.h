@@ -123,7 +123,7 @@ public:
                     if (sym->get_symbol_type() == "Array")
                     {
                         outlog << "Size: " << sym->get_size() << endl;
-                        cout << stoi(sym->get_size());
+                        // cout << stoi(sym->get_size());
                     }
                 }
             }
