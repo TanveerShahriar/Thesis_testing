@@ -2,6 +2,7 @@
 
 #include"symbol_info.h"
 #include "symbol_table.h"
+#include "adjacency_list.h"
 
 #define YYSTYPE symbol_info*
 
@@ -16,6 +17,9 @@ int lines = 1;
 symbol_table st(10, &outlog);
 vector<symbol_info *> params;
 int param_count = 0;
+
+AdjacencyList graph(&outlog);
+vector<string> scope;
 
 void yyerror(char *s) {
     outlog<<"At line "<<lines<<" "<<s<<endl<<endl;
@@ -33,6 +37,8 @@ start : program
 		outlog<<"At line no: "<<lines<<" start : program "<<endl<<endl;
 		outlog << "Symbol Table" << endl << endl;
 		st.print_all_scopes();
+
+		graph.displayAdjacencyList();
 	}
 	;
 
@@ -80,6 +86,8 @@ func_definition : type_specifier ID LPAREN parameter_list RPAREN
         	$2->add_param_type(token);
     	}
 		st.insert($2);
+
+		scope.push_back($2->get_name());
 	}
 	compound_statement
 	{	
@@ -87,6 +95,8 @@ func_definition : type_specifier ID LPAREN parameter_list RPAREN
 		outlog<<$1->get_name()<<" "<<$2->get_name()<<"("<<$4->get_name()<<")\n"<<$7->get_name()<<endl<<endl;
 
 		$$ = new symbol_info($1->get_name()+" "+$2->get_name()+"("+$4->get_name()+")\n"+$7->get_name(),"func_def");	
+
+		scope.pop_back();
 	}
 	| type_specifier ID LPAREN RPAREN
 	{
@@ -94,6 +104,7 @@ func_definition : type_specifier ID LPAREN parameter_list RPAREN
 		$2->set_return_type($1->get_name());
 
 		st.insert($2);
+		scope.push_back($2->get_name());
 	}
 	compound_statement
 	{
@@ -102,6 +113,8 @@ func_definition : type_specifier ID LPAREN parameter_list RPAREN
 		outlog<<$1->get_name()<<" "+$2->get_name()<<"()\n"<<$6->get_name()<<endl<<endl;
 		
 		$$ = new symbol_info($1->get_name()+" "+$2->get_name()+"()\n"+$6->get_name(),"func_def");	
+
+		scope.pop_back();
 	}
 	;
 	
@@ -169,12 +182,19 @@ compound_statement : LCURL
 		st.print_all_scopes();
 		st.exit_scope();
 	}
-	| LCURL RCURL
+	| LCURL 
+	{
+		st.enter_scope();
+	}
+	RCURL
 	{
 		outlog<<"At line no: "<<lines<<" compound_statement : LCURL RCURL "<<endl<<endl;
 		outlog<<"{\n}"<<endl<<endl;
 		
 		$$ = new symbol_info("{\n}","compound_statement");
+
+		st.print_all_scopes();
+		st.exit_scope();
 	}
 	;
 
@@ -493,6 +513,8 @@ factor : variable
 		outlog<<$1->get_name()<<"("<<$3->get_name()<<")"<<endl<<endl;
 
 		$$ = new symbol_info($1->get_name()+"("+$3->get_name()+")","factor");
+
+		graph.addEdge(scope.back(), $1->get_name());
 	}
 	| LPAREN expression RPAREN
 	{
@@ -576,6 +598,7 @@ int main(int argc, char *argv[])
 	yyin = fopen(argv[1], "r");
 	outlog.open("my_log.txt", ios::trunc);
 	st.enter_scope();
+	scope.push_back("Global");
 	
 	if(yyin == NULL)
 	{
