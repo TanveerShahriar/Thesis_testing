@@ -14,6 +14,8 @@ ofstream outlog;
 
 int lines = 1;
 symbol_table st(10, &outlog);
+vector<symbol_info *> params;
+int param_count = 0;
 
 void yyerror(char *s) {
     outlog<<"At line "<<lines<<" "<<s<<endl<<endl;
@@ -108,7 +110,13 @@ parameter_list	: parameter_list COMMA type_specifier ID
 		outlog<<"At line no: "<<lines<<" parameter_list	: parameter_list COMMA type_specifier ID "<<endl<<endl;
 		outlog<<$1->get_name()<<","<<$3->get_name()<<" "<<$4->get_name()<<endl<<endl;
 		
-		$$ = new symbol_info($1->get_name()+","+$3->get_name()+" "+$4->get_name(),"parameter_list");	
+		$$ = new symbol_info($1->get_name()+","+$3->get_name()+" "+$4->get_name(),"parameter_list");
+
+		$4->set_symbol_type("Variable");
+		$4->set_return_type($3->get_name());
+
+		params.push_back($4);
+		param_count++;
 	}
 	| parameter_list COMMA type_specifier
 	{
@@ -123,6 +131,12 @@ parameter_list	: parameter_list COMMA type_specifier ID
 		outlog<<$1->get_name()<<" "<<$2->get_name()<<endl<<endl;
 		
 		$$ = new symbol_info($1->get_name()+" "+$2->get_name(),"parameter_list");	
+
+		$2->set_symbol_type("Variable");
+		$2->set_return_type($1->get_name());
+
+		params.push_back($2);
+		param_count++;
 	}
 	| type_specifier
 	{
@@ -143,6 +157,13 @@ compound_statement : LCURL
 		outlog<<"{\n"+$3->get_name()+"\n}"<<endl<<endl;
 		
 		$$ = new symbol_info("{\n"+$3->get_name()+"\n}","compound_statement");
+
+		if (param_count > 0) {
+			for (auto param : params) {
+				st.insert(param);
+			}
+			param_count = 0;
+		}
 
 		st.print_all_scopes();
 		st.exit_scope();
