@@ -99,6 +99,7 @@ public:
                 {
                     vector<string> result = sym->get_params();
                     int sz = result.size();
+                    sym->set_size(sz);
 
                     outlog << sym->get_symbol_type() << endl;
                     outlog << "Return Type: " << sym->get_return_type() << endl;
