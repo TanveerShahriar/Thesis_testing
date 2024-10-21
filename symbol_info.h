@@ -10,10 +10,10 @@ private:
     string name;
     string type;
 
-    string symbol_type; // variable, array, or function
+    string symbol_type = "NAN"; // variable, array, or function
     string return_type;
-    vector<string> param_types; // Parameter types if it's a function
-    int array_size;    // Array size if it's an array
+    vector<string> params; // Parameter if it's a function
+    int size;    // Array size if it's an array or number of parameters if it's a function
 
 public:
 
@@ -43,14 +43,14 @@ public:
         return return_type;
     }
 
-    int get_array_size()
+    int get_size()
     {
-        return array_size;
+        return size;
     }
 
-    void add_param_type(string param_type)
+    vector<string> get_params()
     {
-        param_types.push_back(param_type);
+        return params;
     }
 
     void set_name(string name)
@@ -73,15 +73,15 @@ public:
         this->return_type = return_type;
     }
 
-    void set_array_size(int size)
+    void set_size(int size)
     {
-        this->array_size = size;
+        this->size = size;
         this->symbol_type = "array"; // Set symbol type to array if array size is set
     }
 
-    vector<string> get_param_types()
+    void add_param_type(string param)
     {
-        return param_types;
+        params.push_back(param);
     }
 };
 

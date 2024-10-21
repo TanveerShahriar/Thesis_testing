@@ -67,20 +67,39 @@ unit : var_declaration
 	}
 	;
 	
-func_definition : type_specifier ID LPAREN parameter_list RPAREN compound_statement
+func_definition : type_specifier ID LPAREN parameter_list RPAREN 
+	{
+		$2->set_symbol_type("Function Definition");
+		$2->set_return_type($1->get_name());
+
+		stringstream ss($4->get_name());
+		string token;
+		while (getline(ss, token, ',')) {
+        	$2->add_param_type(token);
+    	}
+		st.insert($2);
+	}
+	compound_statement
 	{	
 		outlog<<"At line no: "<<lines<<" func_definition : type_specifier ID LPAREN parameter_list RPAREN compound_statement "<<endl<<endl;
-		outlog<<$1->get_name()<<" "<<$2->get_name()<<"("<<$4->get_name()<<")\n"<<$6->get_name()<<endl<<endl;
+		outlog<<$1->get_name()<<" "<<$2->get_name()<<"("<<$4->get_name()<<")\n"<<$7->get_name()<<endl<<endl;
 
-		$$ = new symbol_info($1->get_name()+" "+$2->get_name()+"("+$4->get_name()+")\n"+$6->get_name(),"func_def");
+		$$ = new symbol_info($1->get_name()+" "+$2->get_name()+"("+$4->get_name()+")\n"+$7->get_name(),"func_def");	
 	}
-	| type_specifier ID LPAREN RPAREN compound_statement
+	| type_specifier ID LPAREN RPAREN
+	{
+		$2->set_symbol_type("Function Definition");
+		$2->set_return_type($1->get_name());
+
+		st.insert($2);
+	}
+	compound_statement
 	{
 		
 		outlog<<"At line no: "<<lines<<" func_definition : type_specifier ID LPAREN RPAREN compound_statement "<<endl<<endl;
-		outlog<<$1->get_name()<<" "+$2->get_name()<<"()\n"<<$5->get_name()<<endl<<endl;
+		outlog<<$1->get_name()<<" "+$2->get_name()<<"()\n"<<$6->get_name()<<endl<<endl;
 		
-		$$ = new symbol_info($1->get_name()+" "+$2->get_name()+"()\n"+$5->get_name(),"func_def");	
+		$$ = new symbol_info($1->get_name()+" "+$2->get_name()+"()\n"+$6->get_name(),"func_def");	
 	}
 	;
 	
@@ -489,7 +508,7 @@ arguments : arguments COMMA logic_expression
 		outlog<<"At line no: "<<lines<<" arguments : arguments COMMA logic_expression "<<endl<<endl;
 		outlog<<$1->get_name()<<","<<$3->get_name()<<endl<<endl;
 		
-		$$ = new symbol_info($1->get_name()+$2->get_name()+$3->get_name(),"arguments");
+		$$ = new symbol_info($1->get_name()+","+$3->get_name(),"arguments");
 	}
 	| logic_expression
 	{

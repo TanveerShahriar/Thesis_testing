@@ -90,10 +90,32 @@ public:
 
         for (int i = 0; i < bucket_count; ++i)
         {
-            outlog << i << " --> ";
+            outlog << i << " --> " << endl;
             for (symbol_info *sym : table[i])
             {
-                outlog << "< " << sym->get_name() << " : " << sym->get_type() << " > ";
+                outlog << "< " << sym->get_name() << " : " << sym->get_type() << " > " << endl;
+
+                if (sym->get_symbol_type() == "Function Definition")
+                {
+                    vector<string> result = sym->get_params();
+                    int sz = result.size();
+
+                    outlog << sym->get_symbol_type() << endl;
+                    outlog << "Return Type: " << sym->get_return_type() << endl;
+                    outlog << "Number of Parameters: " << sz << endl;
+
+                    outlog << "Parameter Details: ";
+                    for (size_t i = 0; i < sz; i++) 
+                    {
+                        outlog << result[i];
+                        if (i != sz - 1) 
+                        {
+                            outlog << ", ";
+                        }
+                    }
+
+                    outlog << endl;
+                }
             }
             outlog << endl << endl;
         }
