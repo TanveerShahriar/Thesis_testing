@@ -116,6 +116,16 @@ public:
 
                     outlog << endl;
                 }
+                else
+                {
+                    outlog << sym->get_symbol_type() << endl;
+                    outlog << "Type: " << sym->get_return_type() << endl;
+                    if (sym->get_symbol_type() == "Array")
+                    {
+                        outlog << "Size: " << sym->get_size() << endl;
+                        cout << stoi(sym->get_size());
+                    }
+                }
             }
             outlog << endl << endl;
         }

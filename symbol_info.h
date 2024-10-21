@@ -13,7 +13,7 @@ private:
     string symbol_type = "NAN"; // variable, array, or function
     string return_type;
     vector<string> params; // Parameter if it's a function
-    int size;    // Array size if it's an array or number of parameters if it's a function
+    string size;    // Array size if it's an array or number of parameters if it's a function
 
 public:
 
@@ -43,7 +43,7 @@ public:
         return return_type;
     }
 
-    int get_size()
+    string get_size()
     {
         return size;
     }
@@ -73,10 +73,9 @@ public:
         this->return_type = return_type;
     }
 
-    void set_size(int size)
+    void set_size(string size)
     {
         this->size = size;
-        this->symbol_type = "array"; // Set symbol type to array if array size is set
     }
 
     void add_param_type(string param)

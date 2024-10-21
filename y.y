@@ -162,6 +162,26 @@ var_declaration : type_specifier declaration_list SEMICOLON
 		outlog<<$1->get_name()<<" "<<$2->get_name()<<";"<<endl<<endl;
 		
 		$$ = new symbol_info($1->get_name()+" "+$2->get_name()+";","var_declaration");
+
+		stringstream ss_var($2->get_name());
+		string token_var;
+		while (getline(ss_var, token_var, ',')) {
+			symbol_info *func = new symbol_info(token_var, "ID");
+
+			size_t index_lthird = token_var.find("[");
+			size_t index_rthird = token_var.find("]");
+			if (index_lthird != string::npos) {
+				func->set_name(token_var.substr(0, index_lthird));
+				func->set_symbol_type("Array");
+				func->set_return_type($1->get_name());
+				func->set_size(token_var.substr(index_lthird + 1, index_rthird - index_lthird - 1));
+			} else {
+				func->set_symbol_type("Variable");
+				func->set_return_type($1->get_name());
+			}
+
+			st.insert(func);
+    	}
 	}
 	;
 
