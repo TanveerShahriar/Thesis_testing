@@ -451,12 +451,37 @@ expression : logic_expression
 		if ($3->get_symbol_type() == "function")
 		{
 			string expr = "";
-			cout<< $3->get_struct_name() << endl;
-			for(auto param : $3->get_params())
-			{
-				cout << param;
+			expr += "struct " + $3->get_struct_name() + "Params* " + $3->get_struct_name() + "Args = ";
+			expr += "(struct " + $3->get_struct_name() + "Params*) malloc(sizeof(struct ";
+			expr += $3->get_struct_name() + "Params));\n";
+			
+			vector<string> arg;
+			stringstream temp($3->get_arguments());
+			string part;
+
+			while (getline(temp, part, ',')) {
+				arg.push_back(part);
 			}
-			cout << endl;
+
+			vector<string> temp_params = $3->get_params();
+			for (size_t i = 0; i < arg.size(); ++i)
+			{
+				istringstream iss(temp_params[i]);
+				string variable;
+
+				iss.ignore(numeric_limits<streamsize>::max(), ' ');
+
+				iss >> variable;
+				expr += $3->get_struct_name() + "Args->" + variable + " = " + arg[i] + ";\n";
+			}
+
+			expr += "pthread_t " + $3->get_struct_name() + "Thread;\n";
+			expr += "pthread_create(&" + $3->get_struct_name() + "Thread, NULL, ";
+			expr += "&thread" + $3->get_struct_name() + ", " + $3->get_struct_name() + "Args);\n";
+
+			expr += "pthread_join(" + $3->get_struct_name() + "Thread, NULL);\n";
+			expr += $1->get_name() + " = " + $3->get_struct_name() + "Args->res";
+			$$->set_name(expr);
 		}
 	}
 	;
@@ -471,6 +496,7 @@ logic_expression : rel_expression
 		{
 			$$->set_symbol_type("function");
 			$$->set_struct_name($1->get_struct_name());
+			$$->set_arguments($1->get_arguments());
 			for(auto param : $1->get_params())
 			{
 				$$->add_param_type(param);
@@ -496,6 +522,7 @@ rel_expression : simple_expression
 		{
 			$$->set_symbol_type("function");
 			$$->set_struct_name($1->get_struct_name());
+			$$->set_arguments($1->get_arguments());
 			for(auto param : $1->get_params())
 			{
 				$$->add_param_type(param);
@@ -521,6 +548,7 @@ simple_expression : term
 		{
 			$$->set_symbol_type("function");
 			$$->set_struct_name($1->get_struct_name());
+			$$->set_arguments($1->get_arguments());
 			for(auto param : $1->get_params())
 			{
 				$$->add_param_type(param);
@@ -546,6 +574,7 @@ term : unary_expression
 		{
 			$$->set_symbol_type("function");
 			$$->set_struct_name($1->get_struct_name());
+			$$->set_arguments($1->get_arguments());
 			for(auto param : $1->get_params())
 			{
 				$$->add_param_type(param);
@@ -585,6 +614,7 @@ unary_expression : ADDOP unary_expression
 		{
 			$$->set_symbol_type("function");
 			$$->set_struct_name($1->get_struct_name());
+			$$->set_arguments($1->get_arguments());
 			for(auto param : $1->get_params())
 			{
 				$$->add_param_type(param);
@@ -608,6 +638,7 @@ factor : variable
 		$$ = new symbol_info($1->get_name()+"("+$3->get_name()+")","factor");
 		$$->set_symbol_type("function");
 		$$->set_struct_name($1->get_name());
+		$$->set_arguments($3->get_name());
 		symbol_info* foundSymbol = st.lookup($1);
 		for(auto param : foundSymbol->get_params())
 		{
