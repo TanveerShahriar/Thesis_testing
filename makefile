@@ -15,6 +15,8 @@ YACC_OBJECT = y.o
 LEX_OBJECT = l.o
 EXECUTABLE = parser
 OUTPUT_FILE = my_log.txt
+OUTPUT_C_FILE = result.c
+PARAM_STRUCT_FILE = param_struct.h
 
 # Default rule
 all: $(EXECUTABLE)
@@ -41,7 +43,7 @@ $(EXECUTABLE): $(YACC_OBJECT) $(LEX_OBJECT)
 
 # Clean up generated files
 clean:
-	rm -f $(YACC_OUTPUT) $(LEX_OUTPUT) $(YACC_OBJECT) $(LEX_OBJECT) $(OUTPUT_FILE) $(EXECUTABLE).exe y.output y.tab.h
+	rm -f $(YACC_OUTPUT) $(LEX_OUTPUT) $(YACC_OBJECT) $(LEX_OBJECT) $(OUTPUT_FILE) $(EXECUTABLE).exe ${OUTPUT_C_FILE} ${PARAM_STRUCT_FILE} y.output y.tab.h
 
 # Rebuild the project
 rebuild: clean all

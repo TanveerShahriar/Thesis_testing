@@ -11,7 +11,7 @@ int yylex(void);
 
 extern FILE *yyin;
 
-ofstream outlog;
+ofstream outlog, param_header_file, result;
 
 int lines = 1;
 symbol_table st(10, &outlog);
@@ -39,6 +39,8 @@ start : program
 		st.print_all_scopes();
 
 		graph.displayAdjacencyList();
+
+		result << $1->get_name() << endl;
 	}
 	;
 
@@ -597,6 +599,16 @@ int main(int argc, char *argv[])
 
 	yyin = fopen(argv[1], "r");
 	outlog.open("my_log.txt", ios::trunc);
+	param_header_file.open("param_struct.h", ios::trunc);
+	result.open("result.c", ios::trunc);
+
+	param_header_file << "#ifndef PARAM_HEADER_H" << endl;
+	param_header_file << "#define PARAM_HEADER_H" << endl;
+
+	result << "#include <stdio.h>" << endl;
+	result << "#include <pthread.h>" << endl;
+	result << endl;
+
 	st.enter_scope();
 	scope.push_back("Global");
 	
@@ -611,7 +623,11 @@ int main(int argc, char *argv[])
 	//print number of lines
 	outlog<<"Total lines: "<<lines;
 	
+	param_header_file << "#endif" << endl;
+
 	outlog.close();
+	param_header_file.close();
+	result.close();
 	
 	fclose(yyin);
 	
