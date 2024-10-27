@@ -450,7 +450,13 @@ expression : logic_expression
 		$$ = new symbol_info($1->get_name()+"="+$3->get_name(),"expression");
 		if ($3->get_symbol_type() == "function")
 		{
-			outlog << "Got Function Invoke" << endl;
+			string expr = "";
+			cout<< $3->get_struct_name() << endl;
+			for(auto param : $3->get_params())
+			{
+				cout << param;
+			}
+			cout << endl;
 		}
 	}
 	;
@@ -464,6 +470,11 @@ logic_expression : rel_expression
 		if ($1->get_symbol_type() == "function")
 		{
 			$$->set_symbol_type("function");
+			$$->set_struct_name($1->get_struct_name());
+			for(auto param : $1->get_params())
+			{
+				$$->add_param_type(param);
+			}
 		}
 	}
 	| rel_expression LOGICOP rel_expression
@@ -484,6 +495,11 @@ rel_expression : simple_expression
 		if ($1->get_symbol_type() == "function")
 		{
 			$$->set_symbol_type("function");
+			$$->set_struct_name($1->get_struct_name());
+			for(auto param : $1->get_params())
+			{
+				$$->add_param_type(param);
+			}
 		}
 	}
 	| simple_expression RELOP simple_expression
@@ -504,6 +520,11 @@ simple_expression : term
 		if ($1->get_symbol_type() == "function")
 		{
 			$$->set_symbol_type("function");
+			$$->set_struct_name($1->get_struct_name());
+			for(auto param : $1->get_params())
+			{
+				$$->add_param_type(param);
+			}
 		}
 	}
 	| simple_expression ADDOP term
@@ -524,6 +545,11 @@ term : unary_expression
 		if ($1->get_symbol_type() == "function")
 		{
 			$$->set_symbol_type("function");
+			$$->set_struct_name($1->get_struct_name());
+			for(auto param : $1->get_params())
+			{
+				$$->add_param_type(param);
+			}
 		}
 	}
 	| term MULOP unary_expression
@@ -558,6 +584,11 @@ unary_expression : ADDOP unary_expression
 		if ($1->get_symbol_type() == "function")
 		{
 			$$->set_symbol_type("function");
+			$$->set_struct_name($1->get_struct_name());
+			for(auto param : $1->get_params())
+			{
+				$$->add_param_type(param);
+			}
 		}
 	}
 	;
@@ -576,6 +607,12 @@ factor : variable
 
 		$$ = new symbol_info($1->get_name()+"("+$3->get_name()+")","factor");
 		$$->set_symbol_type("function");
+		$$->set_struct_name($1->get_name());
+		symbol_info* foundSymbol = st.lookup($1);
+		for(auto param : foundSymbol->get_params())
+		{
+			$$->add_param_type(param);
+		}
 
 		graph.addEdge(scope.back(), $1->get_name());
 	}
