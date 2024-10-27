@@ -109,6 +109,31 @@ func_definition : type_specifier ID LPAREN parameter_list RPAREN
 
 		$$ = new symbol_info($1->get_name()+" "+$2->get_name()+"("+$4->get_name()+")\n"+$7->get_name(),"func_def");	
 
+		result << "void* " << "thread" << $2->get_name() << "(void* params)" << endl;
+		result << "{" << endl;
+		result << "struct " << $2->get_name() << "Params*" << " args = (" << "struct " << $2->get_name() << "Params*) params;" << endl;
+		result << $1->get_name() << " result = " << $2->get_name() << "(";
+
+		auto params = $2->get_params();
+		for (auto it = params.begin(); it != params.end(); ++it) {
+			if (it != params.begin()) {
+				result << ", ";
+			}
+
+			istringstream iss(*it);
+			string variable;
+
+			iss.ignore(numeric_limits<streamsize>::max(), ' ');
+
+			iss >> variable;
+			result << "args->" << variable;
+		}
+
+		result << ");" << endl;
+
+		result << "args->res = result;" << endl;
+		result << "}" << endl << endl;
+
 		scope.pop_back();
 	}
 	| type_specifier ID LPAREN RPAREN
@@ -618,6 +643,7 @@ int main(int argc, char *argv[])
 
 	result << "#include <stdio.h>" << endl;
 	result << "#include <pthread.h>" << endl;
+	result << "#include \"param_struct.h\"" << endl;
 	result << endl;
 
 	st.enter_scope();
