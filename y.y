@@ -448,6 +448,10 @@ expression : logic_expression
 		outlog<<$1->get_name()<<"="<<$3->get_name()<<endl<<endl;
 
 		$$ = new symbol_info($1->get_name()+"="+$3->get_name(),"expression");
+		if ($3->get_symbol_type() == "function")
+		{
+			outlog << "Got Function Invoke" << endl;
+		}
 	}
 	;
 
@@ -457,6 +461,10 @@ logic_expression : rel_expression
 		outlog<<$1->get_name()<<endl<<endl;
 		
 		$$ = new symbol_info($1->get_name(),"logic_expression");
+		if ($1->get_symbol_type() == "function")
+		{
+			$$->set_symbol_type("function");
+		}
 	}
 	| rel_expression LOGICOP rel_expression
 	{
@@ -473,6 +481,10 @@ rel_expression : simple_expression
 		outlog<<$1->get_name()<<endl<<endl;
 		
 		$$ = new symbol_info($1->get_name(),"rel_expression");
+		if ($1->get_symbol_type() == "function")
+		{
+			$$->set_symbol_type("function");
+		}
 	}
 	| simple_expression RELOP simple_expression
 	{
@@ -489,6 +501,10 @@ simple_expression : term
 		outlog<<$1->get_name()<<endl<<endl;
 		
 		$$ = new symbol_info($1->get_name(),"simple_expression");
+		if ($1->get_symbol_type() == "function")
+		{
+			$$->set_symbol_type("function");
+		}
 	}
 	| simple_expression ADDOP term
 	{
@@ -505,6 +521,10 @@ term : unary_expression
 		outlog<<$1->get_name()<<endl<<endl;
 		
 		$$ = new symbol_info($1->get_name(),"term");
+		if ($1->get_symbol_type() == "function")
+		{
+			$$->set_symbol_type("function");
+		}
 	}
 	| term MULOP unary_expression
 	{
@@ -535,6 +555,10 @@ unary_expression : ADDOP unary_expression
 		outlog<<$1->get_name()<<endl<<endl;
 		
 		$$ = new symbol_info($1->get_name(),"unary_expression");
+		if ($1->get_symbol_type() == "function")
+		{
+			$$->set_symbol_type("function");
+		}
 	}
 	;
 
@@ -551,6 +575,7 @@ factor : variable
 		outlog<<$1->get_name()<<"("<<$3->get_name()<<")"<<endl<<endl;
 
 		$$ = new symbol_info($1->get_name()+"("+$3->get_name()+")","factor");
+		$$->set_symbol_type("function");
 
 		graph.addEdge(scope.back(), $1->get_name());
 	}
