@@ -90,6 +90,17 @@ func_definition : type_specifier ID LPAREN parameter_list RPAREN
 		st.insert($2);
 
 		scope.push_back($2->get_name());
+
+		param_header_file << "struct " << $2->get_name() << "Params" << endl;
+		param_header_file << "{" << endl;
+
+		for (auto& param : $2->get_params()) {
+        	param_header_file << param << ";" << endl;
+    	}
+
+		param_header_file << $1->get_name() << " res;" << endl;
+
+		param_header_file << "};" << endl << endl;
 	}
 	compound_statement
 	{	
@@ -603,7 +614,7 @@ int main(int argc, char *argv[])
 	result.open("result.c", ios::trunc);
 
 	param_header_file << "#ifndef PARAM_HEADER_H" << endl;
-	param_header_file << "#define PARAM_HEADER_H" << endl;
+	param_header_file << "#define PARAM_HEADER_H" << endl << endl;
 
 	result << "#include <stdio.h>" << endl;
 	result << "#include <pthread.h>" << endl;
