@@ -109,15 +109,16 @@ func_definition : type_specifier ID LPAREN parameter_list RPAREN
 
 		$$ = new symbol_info($1->get_name()+" "+$2->get_name()+"("+$4->get_name()+")\n"+$7->get_name(),"func_def");	
 
-		result << "void* " << "thread" << $2->get_name() << "(void* params)" << endl;
-		result << "{" << endl;
-		result << "struct " << $2->get_name() << "Params*" << " args = (" << "struct " << $2->get_name() << "Params*) params;" << endl;
-		result << $1->get_name() << " result = " << $2->get_name() << "(";
+		string com_stat = $$->get_name() + "\n\n";
+		com_stat += "void* thread" + $2->get_name() + "(void* params)\n";
+		com_stat += "{\n";
+		com_stat += "struct " + $2->get_name() + "Params*" + " args = (" + "struct " + $2->get_name() + "Params*) params;\n";
+		com_stat += $1->get_name() + " result = " + $2->get_name() + "(";
 
 		auto params = $2->get_params();
 		for (auto it = params.begin(); it != params.end(); ++it) {
 			if (it != params.begin()) {
-				result << ", ";
+				com_stat += ", ";
 			}
 
 			istringstream iss(*it);
@@ -126,13 +127,14 @@ func_definition : type_specifier ID LPAREN parameter_list RPAREN
 			iss.ignore(numeric_limits<streamsize>::max(), ' ');
 
 			iss >> variable;
-			result << "args->" << variable;
+			com_stat += "args->" + variable;
 		}
 
-		result << ");" << endl;
+		com_stat += ");\n";
 
-		result << "args->res = result;" << endl;
-		result << "}" << endl << endl;
+		com_stat += "args->res = result;\n";
+		com_stat += "}\n\n";
+		$$->set_name(com_stat);
 
 		scope.pop_back();
 	}
@@ -735,6 +737,7 @@ int main(int argc, char *argv[])
 	param_header_file << "#define PARAM_HEADER_H" << endl << endl;
 
 	result << "#include <stdio.h>" << endl;
+	result << "#include <stdlib.h>" << endl;
 	result << "#include <pthread.h>" << endl;
 	result << "#include \"param_struct.h\"" << endl;
 	result << endl;
