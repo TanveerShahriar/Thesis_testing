@@ -98,7 +98,10 @@ func_definition : type_specifier ID LPAREN parameter_list RPAREN
         	param_header_file << param << ";" << endl;
     	}
 
-		param_header_file << $1->get_name() << " res;" << endl;
+		if ($1->get_name() != "void")
+		{
+			param_header_file << $1->get_name() << " res;" << endl;
+		}
 
 		param_header_file << "};" << endl << endl;
 	}
@@ -450,41 +453,6 @@ expression : logic_expression
 		outlog<<$1->get_name()<<"="<<$3->get_name()<<endl<<endl;
 
 		$$ = new symbol_info($1->get_name()+"="+$3->get_name(),"expression");
-		if ($3->get_symbol_type() == "function")
-		{
-			string expr = "";
-			expr += "struct " + $3->get_struct_name() + "Params* " + $3->get_struct_name() + "Args = ";
-			expr += "(struct " + $3->get_struct_name() + "Params*) malloc(sizeof(struct ";
-			expr += $3->get_struct_name() + "Params));\n";
-			
-			vector<string> arg;
-			stringstream temp($3->get_arguments());
-			string part;
-
-			while (getline(temp, part, ',')) {
-				arg.push_back(part);
-			}
-
-			vector<string> temp_params = $3->get_params();
-			for (size_t i = 0; i < arg.size(); ++i)
-			{
-				istringstream iss(temp_params[i]);
-				string variable;
-
-				iss.ignore(numeric_limits<streamsize>::max(), ' ');
-
-				iss >> variable;
-				expr += $3->get_struct_name() + "Args->" + variable + " = " + arg[i] + ";\n";
-			}
-
-			expr += "pthread_t " + $3->get_struct_name() + "Thread;\n";
-			expr += "pthread_create(&" + $3->get_struct_name() + "Thread, NULL, ";
-			expr += "&thread" + $3->get_struct_name() + ", " + $3->get_struct_name() + "Args);\n";
-
-			expr += "pthread_join(" + $3->get_struct_name() + "Thread, NULL);\n";
-			expr += $1->get_name() + " = " + $3->get_struct_name() + "Args->res";
-			$$->set_name(expr);
-		}
 	}
 	;
 
@@ -494,16 +462,6 @@ logic_expression : rel_expression
 		outlog<<$1->get_name()<<endl<<endl;
 		
 		$$ = new symbol_info($1->get_name(),"logic_expression");
-		if ($1->get_symbol_type() == "function")
-		{
-			$$->set_symbol_type("function");
-			$$->set_struct_name($1->get_struct_name());
-			$$->set_arguments($1->get_arguments());
-			for(auto param : $1->get_params())
-			{
-				$$->add_param_type(param);
-			}
-		}
 	}
 	| rel_expression LOGICOP rel_expression
 	{
@@ -520,16 +478,6 @@ rel_expression : simple_expression
 		outlog<<$1->get_name()<<endl<<endl;
 		
 		$$ = new symbol_info($1->get_name(),"rel_expression");
-		if ($1->get_symbol_type() == "function")
-		{
-			$$->set_symbol_type("function");
-			$$->set_struct_name($1->get_struct_name());
-			$$->set_arguments($1->get_arguments());
-			for(auto param : $1->get_params())
-			{
-				$$->add_param_type(param);
-			}
-		}
 	}
 	| simple_expression RELOP simple_expression
 	{
@@ -546,16 +494,6 @@ simple_expression : term
 		outlog<<$1->get_name()<<endl<<endl;
 		
 		$$ = new symbol_info($1->get_name(),"simple_expression");
-		if ($1->get_symbol_type() == "function")
-		{
-			$$->set_symbol_type("function");
-			$$->set_struct_name($1->get_struct_name());
-			$$->set_arguments($1->get_arguments());
-			for(auto param : $1->get_params())
-			{
-				$$->add_param_type(param);
-			}
-		}
 	}
 	| simple_expression ADDOP term
 	{
@@ -572,16 +510,6 @@ term : unary_expression
 		outlog<<$1->get_name()<<endl<<endl;
 		
 		$$ = new symbol_info($1->get_name(),"term");
-		if ($1->get_symbol_type() == "function")
-		{
-			$$->set_symbol_type("function");
-			$$->set_struct_name($1->get_struct_name());
-			$$->set_arguments($1->get_arguments());
-			for(auto param : $1->get_params())
-			{
-				$$->add_param_type(param);
-			}
-		}
 	}
 	| term MULOP unary_expression
 	{
@@ -612,16 +540,6 @@ unary_expression : ADDOP unary_expression
 		outlog<<$1->get_name()<<endl<<endl;
 		
 		$$ = new symbol_info($1->get_name(),"unary_expression");
-		if ($1->get_symbol_type() == "function")
-		{
-			$$->set_symbol_type("function");
-			$$->set_struct_name($1->get_struct_name());
-			$$->set_arguments($1->get_arguments());
-			for(auto param : $1->get_params())
-			{
-				$$->add_param_type(param);
-			}
-		}
 	}
 	;
 
@@ -638,14 +556,6 @@ factor : variable
 		outlog<<$1->get_name()<<"("<<$3->get_name()<<")"<<endl<<endl;
 
 		$$ = new symbol_info($1->get_name()+"("+$3->get_name()+")","factor");
-		$$->set_symbol_type("function");
-		$$->set_struct_name($1->get_name());
-		$$->set_arguments($3->get_name());
-		symbol_info* foundSymbol = st.lookup($1);
-		for(auto param : foundSymbol->get_params())
-		{
-			$$->add_param_type(param);
-		}
 
 		graph.addEdge(scope.back(), $1->get_name());
 	}

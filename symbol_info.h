@@ -15,9 +15,6 @@ private:
     vector<string> params; // Parameter if it's a function
     int size;    // Array size if it's an array or number of parameters if it's a function
 
-    string struct_name; // For function Invoke
-    string arguments;
-
 public:
 
     symbol_info(string name, string type)
@@ -56,16 +53,6 @@ public:
         return params;
     }
 
-    string get_struct_name()
-    {
-        return struct_name;
-    }
-
-    string get_arguments()
-    {
-        return arguments;
-    }
-
     void set_name(string name)
     {
         this->name = name;
@@ -94,16 +81,6 @@ public:
     void add_param_type(string param)
     {
         params.push_back(param);
-    }
-
-    void set_struct_name(string struct_name)
-    {
-        this->struct_name = struct_name;
-    }
-
-    void set_arguments(string arguments)
-    {
-        this->arguments = arguments;
     }
 };
 
