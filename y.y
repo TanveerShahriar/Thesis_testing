@@ -21,6 +21,9 @@ int param_count = 0;
 AdjacencyList graph(&outlog);
 vector<string> scope;
 
+int var_count = 0;
+vector<string> thread_expr;
+
 void yyerror(char *s) {
     outlog<<"At line "<<lines<<" "<<s<<endl<<endl;
 }
@@ -452,7 +455,12 @@ expression : logic_expression
 		outlog<<"At line no: "<<lines<<" expression : variable ASSIGNOP logic_expression "<<endl<<endl;
 		outlog<<$1->get_name()<<"="<<$3->get_name()<<endl<<endl;
 
-		$$ = new symbol_info($1->get_name()+"="+$3->get_name(),"expression");
+		string expr = "";
+		for (const auto& word : thread_expr) {
+			expr += word + "\n\n";
+		}
+		$$ = new symbol_info(expr + $1->get_name() + " = " + $3->get_name(),"expression");
+		thread_expr.clear();
 	}
 	;
 
@@ -555,9 +563,44 @@ factor : variable
 		outlog<<"At line no: "<<lines<<" factor : ID LPAREN argument_list RPAREN "<<endl<<endl;
 		outlog<<$1->get_name()<<"("<<$3->get_name()<<")"<<endl<<endl;
 
-		$$ = new symbol_info($1->get_name()+"("+$3->get_name()+")","factor");
+		$$ = new symbol_info("t" + to_string(var_count), "factor");
 
 		graph.addEdge(scope.back(), $1->get_name());
+
+		string expr = "";
+
+		expr += "struct " + $1->get_name() + "Params* " + $1->get_name() + "Args" + to_string(var_count) + " = ";
+		expr += "(struct " + $1->get_name() + "Params*) malloc(sizeof(struct ";
+		expr += $1->get_name() + "Params));\n";
+		
+		vector<string> arg;
+		stringstream temp($3->get_name());
+		string part;
+		while (getline(temp, part, ',')) {
+			arg.push_back(part);
+		}
+
+		symbol_info* foundSymbol = st.lookup($1);
+		vector<string> temp_params = foundSymbol->get_params();
+
+		for (size_t i = 0; i < arg.size(); ++i)
+		{
+			istringstream iss(temp_params[i]);
+			string variable;
+			iss.ignore(numeric_limits<streamsize>::max(), ' ');
+			iss >> variable;
+			expr += $1->get_name() + "Args"+ to_string(var_count) +"->" + variable + " = " + arg[i] + ";\n";
+		}
+
+		expr += "pthread_t " + $1->get_name() + "Thread" + to_string(var_count) + ";\n";
+		expr += "pthread_create(&" + $1->get_name() + "Thread" + to_string(var_count) + ", NULL, ";
+		expr += "&thread" + $1->get_name() + ", " + $1->get_name() + "Args" + to_string(var_count) + ");\n";
+		expr += "pthread_join(" + $1->get_name() + "Thread" + to_string(var_count) + ", NULL);\n";
+		expr += foundSymbol->get_return_type() + " t" + to_string(var_count) + " = ";
+		expr += $1->get_name() + "Args" + to_string(var_count) + "->res;";
+
+		var_count++;
+		thread_expr.push_back(expr);
 	}
 	| LPAREN expression RPAREN
 	{
