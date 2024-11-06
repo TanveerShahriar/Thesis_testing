@@ -94,19 +94,22 @@ func_definition : type_specifier ID LPAREN parameter_list RPAREN
 
 		scope.push_back($2->get_name());
 
-		param_header_file << "struct " << $2->get_name() << "Params" << endl;
-		param_header_file << "{" << endl;
-
-		for (auto& param : $2->get_params()) {
-        	param_header_file << param << ";" << endl;
-    	}
-
-		if ($1->get_name() != "void")
+		if ($2->get_name() != "main")
 		{
-			param_header_file << $1->get_name() << " res;" << endl;
-		}
+			param_header_file << "struct " << $2->get_name() << "Params" << endl;
+			param_header_file << "{" << endl;
 
-		param_header_file << "};" << endl << endl;
+			for (auto& param : $2->get_params()) {
+				param_header_file << param << ";" << endl;
+			}
+
+			if ($1->get_name() != "void")
+			{
+				param_header_file << $1->get_name() << " res;" << endl;
+			}
+
+			param_header_file << "};" << endl << endl;
+		}
 	}
 	compound_statement
 	{	
@@ -115,32 +118,42 @@ func_definition : type_specifier ID LPAREN parameter_list RPAREN
 
 		$$ = new symbol_info($1->get_name()+" "+$2->get_name()+"("+$4->get_name()+")\n"+$7->get_name(),"func_def");	
 
-		string com_stat = $$->get_name() + "\n\n";
-		com_stat += "void* thread" + $2->get_name() + "(void* params)\n";
-		com_stat += "{\n";
-		com_stat += "struct " + $2->get_name() + "Params*" + " args = (" + "struct " + $2->get_name() + "Params*) params;\n";
-		com_stat += $1->get_name() + " result = " + $2->get_name() + "(";
+		if ($2->get_name() != "main")
+		{
+			string com_stat = $$->get_name() + "\n\n";
+			com_stat += "void* thread" + $2->get_name() + "(void* params)\n";
+			com_stat += "{\n";
+			com_stat += "struct " + $2->get_name() + "Params*" + " args = (" + "struct " + $2->get_name() + "Params*) params;\n";
+			if ($1->get_name() != "void")
+			{
+				com_stat += $1->get_name() + " result = ";
+			}
+			com_stat += $2->get_name() + "(";
 
-		auto params = $2->get_params();
-		for (auto it = params.begin(); it != params.end(); ++it) {
-			if (it != params.begin()) {
-				com_stat += ", ";
+			auto params = $2->get_params();
+			for (auto it = params.begin(); it != params.end(); ++it) {
+				if (it != params.begin()) {
+					com_stat += ", ";
+				}
+
+				istringstream iss(*it);
+				string variable;
+
+				iss.ignore(numeric_limits<streamsize>::max(), ' ');
+
+				iss >> variable;
+				com_stat += "args->" + variable;
 			}
 
-			istringstream iss(*it);
-			string variable;
+			com_stat += ");\n";
 
-			iss.ignore(numeric_limits<streamsize>::max(), ' ');
-
-			iss >> variable;
-			com_stat += "args->" + variable;
+			if ($2->get_return_type() != "void")
+			{
+				com_stat += "args->res = result;\n";
+			}
+			com_stat += "}\n\n";
+			$$->set_name(com_stat);
 		}
-
-		com_stat += ");\n";
-
-		com_stat += "args->res = result;\n";
-		com_stat += "}\n\n";
-		$$->set_name(com_stat);
 
 		scope.pop_back();
 	}
@@ -151,6 +164,14 @@ func_definition : type_specifier ID LPAREN parameter_list RPAREN
 
 		st.insert($2);
 		scope.push_back($2->get_name());
+
+		if ($1->get_name() != "void" && $2->get_name() != "main")
+		{
+			param_header_file << "struct " << $2->get_name() << "Params" << endl;
+			param_header_file << "{" << endl;
+			param_header_file << $1->get_name() << " res;" << endl;
+			param_header_file << "};" << endl << endl;
+		}
 	}
 	compound_statement
 	{
@@ -159,6 +180,44 @@ func_definition : type_specifier ID LPAREN parameter_list RPAREN
 		outlog<<$1->get_name()<<" "+$2->get_name()<<"()\n"<<$6->get_name()<<endl<<endl;
 		
 		$$ = new symbol_info($1->get_name()+" "+$2->get_name()+"()\n"+$6->get_name(),"func_def");	
+
+		if ($2->get_name() != "main")
+		{
+			string com_stat = $$->get_name() + "\n\n";
+			com_stat += "void* thread" + $2->get_name() + "(void* params)\n";
+			com_stat += "{\n";
+			com_stat += "struct " + $2->get_name() + "Params*" + " args = (" + "struct " + $2->get_name() + "Params*) params;\n";
+
+			if ($1->get_name() != "void")
+			{
+				com_stat += $1->get_name() + " result = ";
+			}
+			com_stat += $2->get_name() + "(";
+
+			auto params = $2->get_params();
+			for (auto it = params.begin(); it != params.end(); ++it) {
+				if (it != params.begin()) {
+					com_stat += ", ";
+				}
+
+				istringstream iss(*it);
+				string variable;
+
+				iss.ignore(numeric_limits<streamsize>::max(), ' ');
+
+				iss >> variable;
+				com_stat += "args->" + variable;
+			}
+
+			com_stat += ");\n";
+
+			if ($2->get_return_type() != "void")
+			{
+				com_stat += "args->res = result;\n";
+			}
+			com_stat += "}\n\n";
+			$$->set_name(com_stat);
+		}
 
 		scope.pop_back();
 	}
@@ -563,15 +622,19 @@ factor : variable
 		outlog<<"At line no: "<<lines<<" factor : ID LPAREN argument_list RPAREN "<<endl<<endl;
 		outlog<<$1->get_name()<<"("<<$3->get_name()<<")"<<endl<<endl;
 
-		$$ = new symbol_info("t" + to_string(var_count), "factor");
 
 		graph.addEdge(scope.back(), $1->get_name());
 
 		string expr = "";
+		symbol_info* foundSymbol = st.lookup($1);
+		vector<string> temp_params = foundSymbol->get_params();
 
-		expr += "struct " + $1->get_name() + "Params* " + $1->get_name() + "Args" + to_string(var_count) + " = ";
-		expr += "(struct " + $1->get_name() + "Params*) malloc(sizeof(struct ";
-		expr += $1->get_name() + "Params));\n";
+		if (foundSymbol->get_size() != 0)
+		{
+			expr += "struct " + $1->get_name() + "Params* " + $1->get_name() + "Args" + to_string(var_count) + " = ";
+			expr += "(struct " + $1->get_name() + "Params*) malloc(sizeof(struct ";
+			expr += $1->get_name() + "Params));\n";
+		}
 		
 		vector<string> arg;
 		stringstream temp($3->get_name());
@@ -579,9 +642,6 @@ factor : variable
 		while (getline(temp, part, ',')) {
 			arg.push_back(part);
 		}
-
-		symbol_info* foundSymbol = st.lookup($1);
-		vector<string> temp_params = foundSymbol->get_params();
 
 		for (size_t i = 0; i < arg.size(); ++i)
 		{
@@ -594,13 +654,32 @@ factor : variable
 
 		expr += "pthread_t " + $1->get_name() + "Thread" + to_string(var_count) + ";\n";
 		expr += "pthread_create(&" + $1->get_name() + "Thread" + to_string(var_count) + ", NULL, ";
-		expr += "&thread" + $1->get_name() + ", " + $1->get_name() + "Args" + to_string(var_count) + ");\n";
-		expr += "pthread_join(" + $1->get_name() + "Thread" + to_string(var_count) + ", NULL);\n";
-		expr += foundSymbol->get_return_type() + " t" + to_string(var_count) + " = ";
-		expr += $1->get_name() + "Args" + to_string(var_count) + "->res;";
+		expr += "&thread" + $1->get_name() + ", ";
+		if (foundSymbol->get_size() != 0)
+		{	
+			expr += $1->get_name() + "Args" + to_string(var_count) + ");\n";
+		}
+		else
+		{
+			expr += "NULL);\n";
+		}
+		expr += "pthread_join(" + $1->get_name() + "Thread" + to_string(var_count) + ", NULL)";
+
+		if (foundSymbol->get_return_type() != "void")
+		{
+			expr += ";\n";
+			expr += foundSymbol->get_return_type() + " t" + to_string(var_count) + " = ";
+			expr += $1->get_name() + "Args" + to_string(var_count) + "->res;";
+
+			$$ = new symbol_info("t" + to_string(var_count), "factor");
+			thread_expr.push_back(expr);
+		}
+		else
+		{
+			$$ = new symbol_info(expr, "factor");
+		}
 
 		var_count++;
-		thread_expr.push_back(expr);
 	}
 	| LPAREN expression RPAREN
 	{
