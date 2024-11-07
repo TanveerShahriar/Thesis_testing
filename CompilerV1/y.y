@@ -42,6 +42,7 @@ start : program
 		st.print_all_scopes();
 
 		graph.displayAdjacencyList();
+		graph.printJSON();
 
 		result << $1->get_name() << endl;
 	}

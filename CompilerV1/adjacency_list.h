@@ -2,7 +2,10 @@
 #define ADJACENCY_LIST_H
 
 #include<bits/stdc++.h>
+#include "json.hpp"
 using namespace std;
+
+using json = nlohmann::json;
 
 class AdjacencyList {
 private:
@@ -70,6 +73,38 @@ public:
             }
             *outlog << endl;
         }
+    }
+
+    void printJSON() {
+        // Reverse the map to get index-to-name mapping
+        unordered_map<int, string> indexToName;
+        for (const auto& pair : nodeIndexMap) {
+            indexToName[pair.second] = pair.first;
+        }
+
+        ofstream JSONFile;
+        JSONFile.open("../Graph Visualizer/adjacency_list.json", ios::trunc);
+
+        // Create a JSON object to store the adjacency list with node names
+        json jsonAdjList;
+
+        // Populate the JSON object
+        for (int i = 0; i < adjList.size(); ++i) {
+            string nodeName = indexToName[i]; // Get the node name
+            vector<string> neighbors;
+
+            // Convert each neighbor index to its corresponding name
+            for (int neighborIndex : adjList[i]) {
+                neighbors.push_back(indexToName[neighborIndex]);
+            }
+
+            // Assign the neighbors list to the JSON object with the node name as the key
+            jsonAdjList[nodeName] = neighbors;
+        }
+
+        // json j = adjList;
+        JSONFile << jsonAdjList;
+        JSONFile.close();
     }
 };
 
