@@ -136,6 +136,8 @@ cmake ..
 ninja
 ```
 
+Input file should be inside build folder as the exe is also inside build folder
+
 ```bash
 .\ASTTraverser.exe .\input.cpp  -- -std=c++17
 ```
