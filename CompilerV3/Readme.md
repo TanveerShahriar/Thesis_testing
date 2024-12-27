@@ -122,3 +122,20 @@ ninja install
 3. Add that `bin` folder to your system `PATH` if you want to run `clang` from any command prompt.
 
 With that, you have a working **LLVM + Clang** build on Windows using Ninja!
+
+## 8. Configure CMake for the code
+
+```bash
+mkdir build
+cd build
+cmake ..
+```
+
+## 9. Execute code
+```bash
+ninja
+```
+
+```bash
+.\ASTTraverser.exe .\input.cpp  -- -std=c++17
+```
