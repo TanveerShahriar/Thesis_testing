@@ -3,7 +3,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 
 # Load the adjacency list from JSON
-with open('adjacency_list.json', 'r') as file:
+with open('../Call Graph/callgraph.json', 'r') as file:
     adjacency_list = json.load(file)
 
 # Create a directed graph (use nx.Graph() for an undirected graph)

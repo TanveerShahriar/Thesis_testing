@@ -1,13 +1,13 @@
 # Define the Python file and the file to clean
 PYTHON_FILE = graph_v.py
-JSON_FILE = adjacency_list.json
+CALL_GRAPH_DIR = ../Call\ Graph
 
 # Default target to run the Python file
 .PHONY: run
 run:
+	make -C $(CALL_GRAPH_DIR)
 	python $(PYTHON_FILE)
 
-# Clean target to remove the adjacency_list.json file
 .PHONY: clean
 clean:
-	rm -f $(JSON_FILE)
+	make -C $(CALL_GRAPH_DIR) clean
