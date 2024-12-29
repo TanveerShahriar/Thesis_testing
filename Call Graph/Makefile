@@ -10,7 +10,7 @@ all: generate_call_graph
 
 # Generate the raw function call graph and process it
 generate_call_graph: $(CPP_FILE)
-	$(CLANG) -cc1 -analyze -analyzer-checker=debug.DumpCallGraph $(CPP_FILE) 2>&1 | tee $(RAW_OUTPUT)
+	$(CLANG) -cc1 -analyze -analyzer-checker=debug.DumpCallGraph $(CPP_FILE) > $(RAW_OUTPUT) 2>&1
 	python $(PROCESS_SCRIPT) $(RAW_OUTPUT) $(OUTPUT_GRAPH)
 	@rm -f $(RAW_OUTPUT)
 
