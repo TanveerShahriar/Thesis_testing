@@ -1,22 +1,24 @@
 # Variables
-CPP_FILE=input.cpp           # Source C++ file
-RAW_OUTPUT=raw_callgraph.txt # Temporary raw output file
-OUTPUT_GRAPH=callgraph.json  # Final structured output file
-CLANG=clang                  # Clang compiler
+CPP_FILE=../Test\ Applications/test_input_1.cpp       # Source C++ file
+RAW_OUTPUT=raw_callgraph.txt    # Temporary raw output file
+OUTPUT_GRAPH=callgraph.json     # Final structured output file
+CLANG=clang++                   # Use clang++ for proper C++ support
 PROCESS_SCRIPT=process_callgraph.py # Script to format output
+CXXFLAGS=-std=c++17 -Wall       # Compiler flags
+ANALYZE_FLAGS=-Xclang -analyze -Xclang -analyzer-checker=debug.DumpCallGraph # Analyzer flags
 
 # Default target
 all: generate_call_graph
 
 # Generate the raw function call graph and process it
 generate_call_graph: $(CPP_FILE)
-	$(CLANG) -cc1 -analyze -analyzer-checker=debug.DumpCallGraph $(CPP_FILE) > $(RAW_OUTPUT) 2>&1
-	python $(PROCESS_SCRIPT) $(RAW_OUTPUT) $(OUTPUT_GRAPH)
-	@rm -f $(RAW_OUTPUT)
+    $(CLANG) $(CXXFLAGS) $(ANALYZE_FLAGS) -fsyntax-only $(CPP_FILE) > $(RAW_OUTPUT) 2>&1
+    python3 $(PROCESS_SCRIPT) $(RAW_OUTPUT) $(OUTPUT_GRAPH)
+    @rm -f $(RAW_OUTPUT)
 
 # Clean up
 clean:
-	@rm -f $(RAW_OUTPUT) $(OUTPUT_GRAPH)
+    @rm -f $(RAW_OUTPUT) $(OUTPUT_GRAPH)
 
 # Rebuild
 rebuild: clean all
