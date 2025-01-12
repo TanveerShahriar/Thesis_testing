@@ -1,0 +1,8 @@
+services:
+  clang-container:
+    image: clang
+    container_name: my_clang_container
+    volumes:
+      - .:/workspace/call_graph
+    stdin_open: true  # Keep the container open
+    tty: true         # Allocate a TTY for interactive shell
