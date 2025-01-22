@@ -1,5 +1,5 @@
 #include <iostream>
-#include <vector>
+#include <queue>
 #include <atomic>
 #include <pthread.h>
 #include <unistd.h>
@@ -11,11 +11,11 @@ using namespace std;
 //                     Global / Shared Structures
 // ============================================================================
 
-// Two "stacks" (vectors) for tasks, one per thread.
-static vector<int> stack1;  // Thread 1's stack
-static vector<int> stack2;  // Thread 2's stack
+// Replace vector<int> with queue<int> for FIFO
+static queue<int> queue1; // Thread 1's task queue
+static queue<int> queue2; // Thread 2's task queue
 
-// Mutexes to protect each stack:
+// Mutexes to protect each queue:
 static pthread_mutex_t m1 = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t m2 = PTHREAD_MUTEX_INITIALIZER;
 
@@ -25,20 +25,16 @@ static pthread_cond_t cv2 = PTHREAD_COND_INITIALIZER;
 
 // A flag to stop the threads (once no more tasks remain):
 static bool stopThreads = false;
-// Mutex to protect stopThreads (not strictly necessary but good practice):
+// Mutex to protect stopThreads (good practice):
 static pthread_mutex_t stopMutex = PTHREAD_MUTEX_INITIALIZER;
 
 // ----------------------------------------------------------------------------
 //  In-Flight Task Counter
 // ----------------------------------------------------------------------------
 //
-// We increment this counter each time we enqueue a new function onto a thread’s 
-// stack, and decrement it right after we finish running that function.  
-// When this count goes to 0, we know there are no pending or running tasks.
-//
-// We'll also need a condition variable to let the main thread wait until
-// all tasks are done (g_inFlightTasks == 0).
-
+// We increment this counter each time we enqueue a new function, and decrement 
+// it right after we finish running that function. When this count goes to 0, 
+// we know there are no pending or running tasks.
 static atomic<int> g_inFlightTasks{0};
 
 // Condition + mutex for "all tasks done"
@@ -60,7 +56,6 @@ void taskFinished() {
 //                       Function IDs and Globals
 // ============================================================================
 
-// Let's define an enum to map function IDs to actual functions:
 enum {
     FUNC_A  = 1,
     FUNC_B  = 2,
@@ -70,7 +65,7 @@ enum {
     FUNC_E  = 6
 };
 
-// Example of some shared “function” data, just to illustrate passing data around
+// Example shared “function” data
 static int funcE_a, funcE_b, funcE_res;
 static int funcD_a, funcD_b, funcD_res;
 
@@ -80,16 +75,16 @@ static int funcD_a, funcD_b, funcD_res;
 
 void pushToThread1(int funcId) {
     pthread_mutex_lock(&m1);
-    stack1.push_back(funcId);
-    g_inFlightTasks++;   // A new task is added
+    queue1.push(funcId);
+    g_inFlightTasks++;    // A new task is added
     pthread_cond_signal(&cv1);
     pthread_mutex_unlock(&m1);
 }
 
 void pushToThread2(int funcId) {
     pthread_mutex_lock(&m2);
-    stack2.push_back(funcId);
-    g_inFlightTasks++;   // A new task is added
+    queue2.push(funcId);
+    g_inFlightTasks++;    // A new task is added
     pthread_cond_signal(&cv2);
     pthread_mutex_unlock(&m2);
 }
@@ -97,9 +92,6 @@ void pushToThread2(int funcId) {
 // ============================================================================
 //                       Actual "Functions"
 // ============================================================================
-//
-// Each function can do work and optionally push more function IDs onto
-// either stack, simulating a "call" from one thread to another.
 
 // funcA: Just an example that pushes funcB onto thread 2
 void funcA() {
@@ -115,15 +107,12 @@ void funcA() {
 // funcB: "calls" funcC on thread 1
 void funcB() {
     cout << "[funcB] Start on pthread " << pthread_self() << endl;
-
-    // Sleep to demonstrate concurrency (not required logically)
     sleep(1);
 
     // Suppose funcB wants to call funcC on thread 1
     pushToThread1(FUNC_C);
 
     sleep(1);
-
     cout << "[funcB] End on pthread " << pthread_self() << endl;
 }
 
@@ -165,6 +154,7 @@ void funcD_2() {
 void funcE() {
     cout << "[funcE] Start on pthread " << pthread_self() << endl;
     funcE_res = 2 * funcE_a + 2 * funcE_b;
+
     // "Call" funcD_2 on thread 2
     pushToThread2(FUNC_D2);
 }
@@ -176,20 +166,20 @@ void funcE() {
 void* thread1_func(void*) {
     while (true) {
         pthread_mutex_lock(&m1);
-        // Wait until we have something on stack1 OR stopThreads is set
-        while (stack1.empty() && !stopThreads) {
+        // Wait until we have something in queue1 OR stopThreads is set
+        while (queue1.empty() && !stopThreads) {
             pthread_cond_wait(&cv1, &m1);
         }
 
-        // If stop is requested and stack is empty, break
-        if (stopThreads && stack1.empty()) {
+        // If stop is requested and queue is empty, break
+        if (stopThreads && queue1.empty()) {
             pthread_mutex_unlock(&m1);
             break;
         }
 
         // We have a task
-        int funcId = stack1.back();
-        stack1.pop_back();
+        int funcId = queue1.front();
+        queue1.pop();
         pthread_mutex_unlock(&m1);
 
         // Dispatch to the correct function
@@ -213,20 +203,20 @@ void* thread1_func(void*) {
 void* thread2_func(void*) {
     while (true) {
         pthread_mutex_lock(&m2);
-        // Wait until we have something on stack2 OR stopThreads is set
-        while (stack2.empty() && !stopThreads) {
+        // Wait until we have something in queue2 OR stopThreads is set
+        while (queue2.empty() && !stopThreads) {
             pthread_cond_wait(&cv2, &m2);
         }
 
-        // If stop is requested and stack is empty, break
-        if (stopThreads && stack2.empty()) {
+        // If stop is requested and queue is empty, break
+        if (stopThreads && queue2.empty()) {
             pthread_mutex_unlock(&m2);
             break;
         }
 
         // We have a task
-        int funcId = stack2.back();
-        stack2.pop_back();
+        int funcId = queue2.front();
+        queue2.pop();
         pthread_mutex_unlock(&m2);
 
         // Dispatch
@@ -257,13 +247,7 @@ int main() {
     pthread_create(&t2, nullptr, thread2_func, nullptr);
 
     // Start something: enqueue FUNC_A onto Thread1
-    // (This increments g_inFlightTasks)
     pushToThread1(FUNC_A);
-
-    // ------------------------------------------------------------------------
-    // Instead of sleeping, we can wait until all tasks are done.
-    // If you know you'll push more tasks from main in a real app, you'd do that
-    // here. For this example, let's just wait until everything finishes.
 
     // Wait for in-flight tasks to become 0
     pthread_mutex_lock(&g_allTasksDoneMtx);
@@ -277,7 +261,7 @@ int main() {
     stopThreads = true;
     pthread_mutex_unlock(&stopMutex);
 
-    // Broadcast to both threads in case they're waiting with empty stacks
+    // Broadcast to both threads in case they're waiting with empty queues
     pthread_cond_broadcast(&cv1);
     pthread_cond_broadcast(&cv2);
 
