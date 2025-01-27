@@ -84,6 +84,7 @@ stack<funcC_values> funcC_value_stack;
 stack<funcD_values> funcD_value_stack;
 stack<funcE_values> funcE_value_stack;
 
+void execute(int thread_idx);
 
 // ============================================================================
 //               Helpers to "push a function" onto a thread
@@ -101,16 +102,6 @@ void pushToThread(int funcId, int thread_idx) {
 // ============================================================================
 //                       Actual "Functions"
 // ============================================================================
-
-void printStackTops() {
-    for (size_t i = 0; i < stacks.size(); ++i) {
-        if (!stacks[i].empty()) {
-            cout << "Stack " << i << " top: " << stacks[i].top() << endl;
-        } else {
-            cout << "Stack " << i << " is empty." << endl;
-        }
-    }
-}
 
 void funcE(){
     cout << "[funcE] Start on pthread " << pthread_self() << endl;
@@ -168,9 +159,7 @@ void funcC(){
         if (stacks[0].empty()) t = -1;
         else t = stacks[0].top();
         if (temp != t){
-            funcE();
-            stacks[0].pop();
-            taskFinished();
+            execute(0);
         }
     }
     
@@ -205,6 +194,25 @@ void funcA(){
 //                        Thread Main Loops
 // ============================================================================
 
+void execute(int thread_idx){
+    int funcId = stacks[thread_idx].top();
+    stacks[thread_idx].pop();
+    pthread_mutex_unlock(&mutexes[thread_idx]);
+
+    switch (funcId) {
+        case FUNC_A:  funcA();  break;
+        case FUNC_B:  funcB();  break;
+        case FUNC_C:  funcC();  break;
+        case FUNC_D:  funcD();  break;
+        case FUNC_E:  funcE();  break;
+        default:
+            cout << "Thread1: Unknown funcId " << funcId << endl;
+            break;
+    }
+
+    taskFinished();
+}
+
 void* threadFunction(void* arg){
     int thread_idx = *(int*)arg;
     // !stopThreads || !stacks[thread_idx].empty()
@@ -219,22 +227,7 @@ void* threadFunction(void* arg){
             break;
         }
         
-        int funcId = stacks[thread_idx].top();
-        stacks[thread_idx].pop();
-        pthread_mutex_unlock(&mutexes[thread_idx]);
-
-        switch (funcId) {
-            case FUNC_A:  funcA();  break;
-            case FUNC_B:  funcB();  break;
-            case FUNC_C:  funcC();  break;
-            case FUNC_D:  funcD();  break;
-            case FUNC_E:  funcE();  break;
-            default:
-                cout << "Thread1: Unknown funcId " << funcId << endl;
-                break;
-        }
-
-        taskFinished();
+        execute(thread_idx);
     }
     return nullptr;
 }
