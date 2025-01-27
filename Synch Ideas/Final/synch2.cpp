@@ -120,11 +120,20 @@ void funcD(){
 
     funcE_value_stack.push(funcE_val_1);
 
+    int temp;
+    if (stacks[1].empty()) temp = -1;
+    else temp = stacks[1].top();
+
     pushToThread(FUNC_E, 0);
 
     while (!funcE_value_stack.top().funcE_done)
     {
-
+        int t;
+        if (stacks[1].empty()) t = -1;
+        else t = stacks[1].top();
+        if (temp != t){
+            execute(1);
+        }
     }
     
     int res = funcE_value_stack.top().funcE_return;
@@ -151,6 +160,7 @@ void funcC(){
     int temp;
     if (stacks[0].empty()) temp = -1;
     else temp = stacks[0].top();
+
     pushToThread(FUNC_D, 1);
 
     while (!funcD_value_stack.top().funcD_done)
