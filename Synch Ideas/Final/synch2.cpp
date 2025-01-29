@@ -5,6 +5,7 @@
 #include <vector>
 #include <stack>
 #include <atomic>
+#include <queue>
 
 using namespace std;
 
@@ -15,7 +16,7 @@ using namespace std;
 
 const int OBFUSCATION_THREADS = 2;
 
-static vector<stack<int>> stacks;
+static vector<queue<int>> queues;
 
 static vector<pthread_mutex_t> mutexes;
 static vector<pthread_cond_t> conditions;
@@ -78,11 +79,11 @@ struct funcE_values
     bool funcE_done = false;
 };
 
-stack<funcA_values> funcA_value_stack;
-stack<funcB_values> funcB_value_stack;
-stack<funcC_values> funcC_value_stack;
-stack<funcD_values> funcD_value_stack;
-stack<funcE_values> funcE_value_stack;
+queue<funcA_values> funcA_value_queue;
+queue<funcB_values> funcB_value_queue;
+queue<funcC_values> funcC_value_queue;
+queue<funcD_values> funcD_value_queue;
+queue<funcE_values> funcE_value_queue;
 
 void execute(int thread_idx);
 
@@ -92,7 +93,7 @@ void execute(int thread_idx);
 
 void pushToThread(int funcId, int thread_idx) {
     pthread_mutex_lock(&mutexes[thread_idx]);
-    stacks[thread_idx].push(funcId);
+    queues[thread_idx].push(funcId);
     g_inFlightTasks++;
     pthread_cond_signal(&conditions[thread_idx]);
     pthread_mutex_unlock(&mutexes[thread_idx]);
@@ -106,8 +107,8 @@ void pushToThread(int funcId, int thread_idx) {
 void funcE(){
     cout << "[funcE] Start on pthread " << pthread_self() << endl;
 
-    funcE_value_stack.top().funcE_return = 2 * funcE_value_stack.top().funcE_a + 2 * funcE_value_stack.top().funcE_b;
-    funcE_value_stack.top().funcE_done = true;
+    funcE_value_queue.front().funcE_return = 2 * funcE_value_queue.front().funcE_a + 2 * funcE_value_queue.front().funcE_b;
+    funcE_value_queue.front().funcE_done = true;
 }
 
 void funcD(){
@@ -118,32 +119,25 @@ void funcD(){
     funcE_val_1.funcE_a = 2;
     funcE_val_1.funcE_b = 3;
 
-    funcE_value_stack.push(funcE_val_1);
-
-    int temp;
-    if (stacks[1].empty()) temp = -1;
-    else temp = stacks[1].top();
+    funcE_value_queue.push(funcE_val_1);
 
     pushToThread(FUNC_E, 0);
 
-    while (!funcE_value_stack.top().funcE_done)
+    while (!funcE_value_queue.front().funcE_done)
     {
-        int t;
-        if (stacks[1].empty()) t = -1;
-        else t = stacks[1].top();
-        if (temp != t){
+        if (!queues[1].empty()){
             execute(1);
         }
     }
     
-    int res = funcE_value_stack.top().funcE_return;
-    funcE_value_stack.pop();
+    int res = funcE_value_queue.front().funcE_return;
+    funcE_value_queue.pop();
 
-    funcD_value_stack.top().funcD_return = res - funcD_value_stack.top().funcD_a + funcD_value_stack.top().funcD_b;
+    funcD_value_queue.front().funcD_return = res - funcD_value_queue.front().funcD_a + funcD_value_queue.front().funcD_b;
 
     cout << "End D " << res << " " << pthread_self() << endl;
 
-    funcD_value_stack.top().funcD_done = true;
+    funcD_value_queue.front().funcD_done = true;
 }
 
 void funcC(){
@@ -155,26 +149,19 @@ void funcC(){
     funcD_val_1.funcD_a = 4;
     funcD_val_1.funcD_b = 5;
 
-    funcD_value_stack.push(funcD_val_1);
-    
-    int temp;
-    if (stacks[0].empty()) temp = -1;
-    else temp = stacks[0].top();
+    funcD_value_queue.push(funcD_val_1);
 
     pushToThread(FUNC_D, 1);
 
-    while (!funcD_value_stack.top().funcD_done)
+    while (!funcD_value_queue.front().funcD_done)
     {
-        int t;
-        if (stacks[0].empty()) t = -1;
-        else t = stacks[0].top();
-        if (temp != t){
+        if (!queues[0].empty()){
             execute(0);
         }
     }
     
-    int res = funcD_value_stack.top().funcD_return;
-    funcD_value_stack.pop();
+    int res = funcD_value_queue.front().funcD_return;
+    funcD_value_queue.pop();
 
     cout << "[funcC] End on pthread " << res << " " << pthread_self() << endl;
 }
@@ -205,8 +192,8 @@ void funcA(){
 // ============================================================================
 
 void execute(int thread_idx){
-    int funcId = stacks[thread_idx].top();
-    stacks[thread_idx].pop();
+    int funcId = queues[thread_idx].front();
+    queues[thread_idx].pop();
     pthread_mutex_unlock(&mutexes[thread_idx]);
 
     switch (funcId) {
@@ -225,14 +212,13 @@ void execute(int thread_idx){
 
 void* threadFunction(void* arg){
     int thread_idx = *(int*)arg;
-    // !stopThreads || !stacks[thread_idx].empty()
     while (true) {
-        while (stacks[thread_idx].empty() && !stopThreads)
+        while (queues[thread_idx].empty() && !stopThreads)
         {
             pthread_cond_wait(&conditions[thread_idx], &mutexes[thread_idx]);
         }
 
-        if (stopThreads && stacks[thread_idx].empty()) {
+        if (stopThreads && queues[thread_idx].empty()) {
             pthread_mutex_unlock(&mutexes[thread_idx]);
             break;
         }
@@ -247,7 +233,7 @@ int main(){
     pthread_t threads[OBFUSCATION_THREADS];
 
     for(int i = 0; i < OBFUSCATION_THREADS; i++){
-        stacks.push_back(stack<int>()); 
+        queues.push_back(queue<int>()); 
 
         pthread_mutex_t mutex;
         pthread_mutex_init(&mutex, nullptr);
