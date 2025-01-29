@@ -169,8 +169,8 @@ void funcC(){
 void funcB(){
     cout << "[funcB] Start on pthread " << pthread_self() << endl;
 
-    sleep(2);
     pushToThread(FUNC_C, 0);
+    sleep(2);
 
     cout << "[funcB] End on pthread " << pthread_self() << endl;
 }
@@ -178,10 +178,8 @@ void funcB(){
 void funcA(){
     cout << "[funcA] Start on pthread " << pthread_self() << endl;
 
-    sleep(1);
     pushToThread(FUNC_B, 1);
-
-    sleep(2);
+    sleep(1);
 
     cout << "[funcA] End on pthread " << pthread_self() << endl;
 }
