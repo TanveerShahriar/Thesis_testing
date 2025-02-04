@@ -76,13 +76,13 @@ void pushToThread(int funcId, int thread_idx) {
 //                       Actual "Functions"
 // ============================================================================
 
-void funcE(){
+void funcE(int thread_idx){
     cout << "[funcE] Start on pthread " << pthread_self() << endl;
     funcE_value_queue.front().funcE_return = 2 * funcE_value_queue.front().funcE_a + 2 * funcE_value_queue.front().funcE_b;
     funcE_value_queue.front().funcE_done = true;
 }
 
-void funcD(){
+void funcD(int thread_idx){
     cout << "[funcD] Start on pthread " << pthread_self() << endl;
     sleep(1);
 
@@ -91,7 +91,7 @@ void funcD(){
 
     pushToThread(FUNC_E, 0);
     while (!funcE_value_queue.front().funcE_done) {
-        if (!queues[1].empty()) execute(1);
+        if (!queues[1].empty()) execute(thread_idx);
     }
 
     int res = funcE_value_queue.front().funcE_return;
@@ -102,7 +102,7 @@ void funcD(){
     funcD_value_queue.front().funcD_done = true;
 }
 
-void funcC(){
+void funcC(int thread_idx){
     cout << "[funcC] Start on pthread " << pthread_self() << endl;
     sleep(1);
 
@@ -111,7 +111,7 @@ void funcC(){
 
     pushToThread(FUNC_D, 1);
     while (!funcD_value_queue.front().funcD_done) {
-        if (!queues[0].empty()) execute(0);
+        if (!queues[0].empty()) execute(thread_idx);
     }
 
     int res = funcD_value_queue.front().funcD_return;
@@ -120,7 +120,7 @@ void funcC(){
     cout << "[funcC] End on pthread " << res << " " << pthread_self() << endl;
 }
 
-void funcB(){
+void funcB(int thread_idx){
     cout << "[funcB] Start on pthread " << pthread_self() << endl;
 
     pushToThread(FUNC_C, 0);
@@ -129,7 +129,7 @@ void funcB(){
     cout << "[funcB] End on pthread " << pthread_self() << endl;
 }
 
-void funcA(){
+void funcA(int thread_idx){
     cout << "[funcA] Start on pthread " << pthread_self() << endl;
 
     pushToThread(FUNC_B, 1);
@@ -148,11 +148,11 @@ void execute(int thread_idx){
     pthread_mutex_unlock(&mutexes[thread_idx]);
 
     switch (funcId) {
-        case FUNC_A: funcA(); break;
-        case FUNC_B: funcB(); break;
-        case FUNC_C: funcC(); break;
-        case FUNC_D: funcD(); break;
-        case FUNC_E: funcE(); break;
+        case FUNC_A: funcA(thread_idx); break;
+        case FUNC_B: funcB(thread_idx); break;
+        case FUNC_C: funcC(thread_idx); break;
+        case FUNC_D: funcD(thread_idx); break;
+        case FUNC_E: funcE(thread_idx); break;
         default: cout << "Unknown funcId " << funcId << endl; break;
     }
 
