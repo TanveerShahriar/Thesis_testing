@@ -72,7 +72,7 @@ extern mutex g_allTasksDoneMtx;
 extern std::atomic<int>* vec;
 
 // Function prototypes
-void initializeArray();
+void initialize();
 void exit();
 void taskFinished();
 int getBalancedRandomIndex();

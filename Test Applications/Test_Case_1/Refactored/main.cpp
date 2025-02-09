@@ -91,7 +91,7 @@ void funcA(int thread_idx, int param_index) {
 }
 
 int main() {
-    initializeArray();
+    initialize();
 
     pushToThread(FUNC_A, funcA_lines, -1);
 

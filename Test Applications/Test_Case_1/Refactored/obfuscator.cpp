@@ -26,7 +26,7 @@ std::atomic<int>* vec;
 std::random_device rd;
 std::mt19937 rng(rd());
 
-void initializeArray() {
+void initialize() {
     vec = new std::atomic<int>[OBFUSCATION_THREADS];
     for (int i = 0; i < OBFUSCATION_THREADS; i++) {
         vec[i].store(0);
