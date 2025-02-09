@@ -1,6 +1,8 @@
 #include <iostream>
 #include "obfuscator.hpp"
 
+// g++ main.cpp obfuscator.cpp -o obfuscator
+
 using namespace std;
 
 void funcE(int thread_idx, int param_index) {
